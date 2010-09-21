@@ -5,12 +5,12 @@
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
 # of the License, or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -24,13 +24,13 @@ class NewsController < ApplicationController
   before_filter :authorize, :except => [:index, :preview]
   before_filter :find_optional_project, :only => :index
   accept_key_auth :index
-  
+
   def index
     @news_pages, @newss = paginate :news,
                                    :per_page => 10,
                                    :conditions => Project.allowed_to_condition(User.current, :view_news, :project => @project),
                                    :include => [:author, :project],
-                                   :order => "#{News.table_name}.created_on DESC"    
+                                   :order => "#{News.table_name}.created_on DESC"
     respond_to do |format|
       format.html { render :layout => false if request.xhr? }
       format.xml { render :xml => @newss.to_xml }
@@ -38,7 +38,7 @@ class NewsController < ApplicationController
       format.atom { render_feed(@newss, :title => (@project ? @project.name : Setting.app_title) + ": #{l(:label_news_plural)}") }
     end
   end
-  
+
   def show
     @comments = @news.comments
     @comments.reverse! if User.current.wants_comments_in_reverse_order?
@@ -54,19 +54,22 @@ class NewsController < ApplicationController
       end
     end
   end
-  
+
   def edit
     if request.post? and @news.update_attributes(params[:news])
       flash[:notice] = l(:notice_successful_update)
       redirect_to :action => 'show', :id => @news
     end
   end
-  
+
+  # Send email to project users
+  # Benjamin Grandfond <benjaming@theodo.fr>
   def add_comment
     @comment = Comment.new(params[:comment])
     @comment.author = User.current
     if @news.comments << @comment
       flash[:notice] = l(:label_comment_added)
+      Mailer.deliver_news_comment_added(@news, @comment)
       redirect_to :action => 'show', :id => @news
     else
       show
@@ -83,19 +86,19 @@ class NewsController < ApplicationController
     @news.destroy
     redirect_to :action => 'index', :project_id => @project
   end
-  
+
   def preview
     @text = (params[:news] ? params[:news][:description] : nil)
     render :partial => 'common/preview'
   end
-  
+
 private
   def find_project
     @project = Project.find(params[:project_id])
   rescue ActiveRecord::RecordNotFound
     render_404
   end
-  
+
   def find_optional_project
     return true unless params[:project_id]
     @project = Project.find(params[:project_id])

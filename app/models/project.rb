@@ -389,7 +389,13 @@ class Project < ActiveRecord::Base
   def notified_users
     members.select {|m| m.mail_notification? || m.user.mail_notification?}.collect {|m| m.user}
   end
-  
+
+  # Notify only developers
+  # Benjamin Grandfond <benjaming@theodo.fr>
+  def issue_notified_users
+    members.select {|m| m.roles.detect {|role| role.assignable?} && (m.mail_notification? || m.user.mail_notification?)}.collect {|m| m.user}
+  end
+
   # Returns an array of all custom fields enabled for project issues
   # (explictly associated custom fields and custom fields enabled for all projects)
   def all_issue_custom_fields

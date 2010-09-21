@@ -409,7 +409,8 @@ class Issue < ActiveRecord::Base
   
   # Returns the mail adresses of users that should be notified
   def recipients
-    notified = project.notified_users
+    notified = project.issue_notified_users
+    #notified = project.notified_users
     # Author and assignee are always notified unless they have been locked
     notified << author if author && author.active?
     notified << assigned_to if assigned_to && assigned_to.active?

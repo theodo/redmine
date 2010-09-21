@@ -1,0 +1,5 @@
+<h1><%= l(:mail_title_news_comment_added,:news =>  link_to(h(@news.title), @news_url)) %></h1>
+
+<%= textilizable(@comment.comments) %>
+
+<em><%= l(:mail_body_news_comment_added_author, :author => h(@comment.author.name), :date => format_date(@comment.updated_on)) %></em>
